@@ -56,7 +56,10 @@ def generate_light_change_video(output_path: Path, width=640, height=360, fps=30
     total_frames = fps * duration_seconds
 
     for frame_idx in range(total_frames):
-        brightness = int(30 + 50 * np.sin(frame_idx * 0.06))
+        # Brightness always between 20 and 100
+        brightness = int(60 + 40 * np.sin(frame_idx * 0.06))
+        brightness = np.clip(brightness, 0, 255)
+
         frame = np.full((height, width, 3), brightness, dtype=np.uint8)
 
         # Moving shadow
