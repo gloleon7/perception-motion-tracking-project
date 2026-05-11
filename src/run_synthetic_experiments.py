@@ -7,8 +7,8 @@ from pathlib import Path
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
 INPUT_DIR = PROJECT_DIR / "data" / "synthetic_videos"
-OUTPUT_VIDEO_DIR = PROJECT_DIR / "outputs" / "processed_videos"
-OUTPUT_PLOTS_DIR = PROJECT_DIR / "outputs" / "plots"
+OUTPUT_VIDEO_DIR = PROJECT_DIR / "outputs" / "processed_videos" / "synthetic"
+OUTPUT_PLOTS_DIR = PROJECT_DIR / "outputs" / "plots" / "synthetic"
 
 OUTPUT_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
@@ -330,19 +330,24 @@ def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
             "method": "frame_difference",
             "detections": 0,
             "mean_displacement": 0,
+            "median_displacement": 0,
+            "p95_displacement": 0,
             "max_displacement": 0,
             "mean_area": 0,
         }
+
+    displacement = df["displacement"].dropna()
 
     return {
         "scenario": scenario_name,
         "method": "frame_difference",
         "detections": len(df),
-        "mean_displacement": df["displacement"].mean(),
-        "max_displacement": df["displacement"].max(),
+        "mean_displacement": displacement.mean(),
+        "median_displacement": displacement.median(),
+        "p95_displacement": displacement.quantile(0.95),
+        "max_displacement": displacement.max(),
         "mean_area": df["area"].mean(),
     }
-
 
 def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
     if df.empty:
@@ -351,18 +356,23 @@ def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
             "method": "lucas_kanade",
             "detections": 0,
             "mean_displacement": 0,
+            "median_displacement": 0,
+            "p95_displacement": 0,
             "max_displacement": 0,
             "mean_points_per_frame": 0,
         }
 
+    displacement = df["displacement"].dropna()
     points_per_frame = df.groupby("frame")["displacement"].count()
 
     return {
         "scenario": scenario_name,
         "method": "lucas_kanade",
         "detections": df["frame"].nunique(),
-        "mean_displacement": df["displacement"].mean(),
-        "max_displacement": df["displacement"].max(),
+        "mean_displacement": displacement.mean(),
+        "median_displacement": displacement.median(),
+        "p95_displacement": displacement.quantile(0.95),
+        "max_displacement": displacement.max(),
         "mean_points_per_frame": points_per_frame.mean(),
     }
 

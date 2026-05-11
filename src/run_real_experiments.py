@@ -6,19 +6,19 @@ from pathlib import Path
 
 PROJECT_DIR = Path(__file__).resolve().parents[1]
 
-INPUT_DIR = PROJECT_DIR / "data" / "synthetic_videos"
-OUTPUT_VIDEO_DIR = PROJECT_DIR / "outputs" / "processed_videos"
-OUTPUT_PLOTS_DIR = PROJECT_DIR / "outputs" / "plots"
+INPUT_DIR = PROJECT_DIR / "data" / "input_videos"
+OUTPUT_VIDEO_DIR = PROJECT_DIR / "outputs" / "processed_videos" / "real"
+OUTPUT_PLOTS_DIR = PROJECT_DIR / "outputs" / "plots" / "real"
 
 OUTPUT_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 SCENARIOS = {
-    "clean": INPUT_DIR / "synthetic_clean_circle.mp4",
-    "noisy": INPUT_DIR / "synthetic_noisy_circle.mp4",
-    "light_change": INPUT_DIR / "synthetic_light_circle.mp4",
-    "fast_motion": INPUT_DIR / "synthetic_fast_circle.mp4",
+    "real_normal": INPUT_DIR / "real_normal.mp4",
+    "real_noisy": INPUT_DIR / "real_noisy.mp4",
+    "real_light_change": INPUT_DIR / "real_light_change.mp4",
+    "real_fast": INPUT_DIR / "real_fast.mp4",
 }
 
 
@@ -188,9 +188,9 @@ def track_with_lucas_kanade(
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
     feature_params = dict(
-        maxCorners=80,
-        qualityLevel=0.01,
-        minDistance=5,
+        maxCorners=50,
+        qualityLevel=0.05,
+        minDistance=15,
         blockSize=7,
     )
 
@@ -387,6 +387,9 @@ def main():
         frame_df = track_with_frame_difference(
             input_video_path=video_path,
             output_video_path=frame_diff_video,
+            threshold_value=45,
+            min_area=2500,
+            kernel_size=9,
         )
 
         lk_df = track_with_lucas_kanade(
@@ -404,7 +407,7 @@ def main():
         print(f"Saved Lucas-Kanade video: {lk_video}")
 
     summary_df = pd.DataFrame(all_summaries)
-    summary_path = OUTPUT_PLOTS_DIR / "synthetic_experiments_summary.csv"
+    summary_path = OUTPUT_PLOTS_DIR / "real_experiments_summary.csv"
     summary_df.to_csv(summary_path, index=False)
 
     print("\nFinal summary:")
