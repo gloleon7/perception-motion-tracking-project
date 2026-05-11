@@ -1,0 +1,9 @@
+video_name,type,scenario,description,application,status
+synthetic_clean_circle.mp4,synthetic,clean,Círculo moviéndose sobre fondo negro,Validación controlada del seguimiento,generated
+synthetic_noisy_circle.mp4,synthetic,noisy,Círculo moviéndose con ruido añadido,Análisis de robustez frente a ruido de cámara,generated
+synthetic_light_circle.mp4,synthetic,light_change,Círculo moviéndose con cambios de iluminación y sombra,Análisis de robustez frente a iluminación variable,generated
+synthetic_fast_circle.mp4,synthetic,fast_motion,Círculo moviéndose a mayor velocidad,Análisis de limitaciones ante movimiento rápido,generated
+real_easy.mp4,real,controlled_object,Objeto moviéndose sobre fondo fijo,Validación real básica,pending
+real_person.mp4,real,person_motion,Persona caminando en interior,Seguimiento de personas en entorno interior,pending
+real_shadow.mp4,real,illumination_shadow,Persona u objeto moviéndose con sombras o cambios de luz,Robustez ante cambios de iluminación,pending
+real_fast.mp4,real,fast_motion,Objeto o persona moviéndose rápidamente,Análisis de límite de seguimiento,pending
