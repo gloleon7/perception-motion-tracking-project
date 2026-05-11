@@ -188,9 +188,9 @@ def track_with_lucas_kanade(
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
     feature_params = dict(
-        maxCorners=80,
-        qualityLevel=0.01,
-        minDistance=5,
+        maxCorners=50,
+        qualityLevel=0.05,
+        minDistance=15,
         blockSize=7,
     )
 
@@ -209,7 +209,6 @@ def track_with_lucas_kanade(
     if p0 is None:
         raise RuntimeError(f"No feature points found in: {input_video_path}")
 
-    mask = np.zeros_like(old_frame)
     tracked_data = []
     frame_index = 0
 
@@ -231,14 +230,19 @@ def track_with_lucas_kanade(
 
         if p1 is None or status is None:
             p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
+            old_gray = frame_gray.copy()
+
             if p0 is None:
                 break
+
             continue
 
         good_new = p1[status == 1]
         good_old = p0[status == 1]
 
         displacements = []
+
+        output_frame = frame.copy()
 
         for new_point, old_point in zip(good_new, good_old):
             x_new, y_new = new_point.ravel()
@@ -264,23 +268,22 @@ def track_with_lucas_kanade(
             x_new_i, y_new_i = int(x_new), int(y_new)
             x_old_i, y_old_i = int(x_old), int(y_old)
 
-            mask = cv2.line(
-                mask,
-                (x_new_i, y_new_i),
+            # Draw only the current optical flow vector.
+            cv2.line(
+                output_frame,
                 (x_old_i, y_old_i),
+                (x_new_i, y_new_i),
                 (255, 0, 0),
                 2,
             )
 
-            frame = cv2.circle(
-                frame,
+            cv2.circle(
+                output_frame,
                 (x_new_i, y_new_i),
                 4,
                 (0, 0, 255),
                 -1,
             )
-
-        output_frame = cv2.add(frame, mask)
 
         mean_displacement = np.mean(displacements) if len(displacements) > 0 else 0
 
@@ -310,6 +313,7 @@ def track_with_lucas_kanade(
 
         if len(good_new) < 5:
             p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
+
             if p0 is None:
                 break
         else:
@@ -321,7 +325,6 @@ def track_with_lucas_kanade(
     writer.release()
 
     return pd.DataFrame(tracked_data)
-
 
 def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
     if df.empty:
@@ -375,7 +378,6 @@ def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
         "max_displacement": displacement.max(),
         "mean_points_per_frame": points_per_frame.mean(),
     }
-
 
 def main():
     all_summaries = []
