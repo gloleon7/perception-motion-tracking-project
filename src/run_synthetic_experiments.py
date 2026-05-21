@@ -107,16 +107,7 @@ def track_with_frame_difference(
                 cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
 
-        trajectory_points = [(point["x"], point["y"]) for point in trajectory]
-
-        for i in range(1, len(trajectory_points)):
-            cv2.line(
-                frame,
-                trajectory_points[i - 1],
-                trajectory_points[i],
-                (255, 0, 0),
-                2,
-            )
+    
 
         status_text = "Detected" if detected else "Not detected"
 

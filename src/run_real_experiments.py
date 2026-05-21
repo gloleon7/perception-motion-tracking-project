@@ -15,10 +15,17 @@ OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 SCENARIOS = {
-    "real_normal": INPUT_DIR / "real_normal.mp4",
-    "real_noisy": INPUT_DIR / "real_noisy.mp4",
-    "real_light_change": INPUT_DIR / "real_light_change.mp4",
-    "real_fast": INPUT_DIR / "real_fast.mp4",
+    "real_normal_1": INPUT_DIR / "real_normal_1.mp4",
+    "real_normal_2": INPUT_DIR / "real_normal_2.mp4",
+
+    "real_noisy_1": INPUT_DIR / "real_noisy_1.mp4",
+    "real_noisy_2": INPUT_DIR / "real_noisy_2.mp4",
+
+    "real_light_change_1": INPUT_DIR / "real_light_change_1.mp4",
+    "real_light_change_2": INPUT_DIR / "real_light_change_2.mp4",
+
+    "real_fast_1": INPUT_DIR / "real_fast_1.mp4",
+    "real_fast_2": INPUT_DIR / "real_fast_2.mp4",
 }
 
 
@@ -109,14 +116,8 @@ def track_with_frame_difference(
 
         trajectory_points = [(point["x"], point["y"]) for point in trajectory]
 
-        for i in range(1, len(trajectory_points)):
-            cv2.line(
-                frame,
-                trajectory_points[i - 1],
-                trajectory_points[i],
-                (255, 0, 0),
-                2,
-            )
+
+            
 
         status_text = "Detected" if detected else "Not detected"
 
@@ -206,9 +207,6 @@ def track_with_lucas_kanade(
 
     p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
 
-    if p0 is None:
-        raise RuntimeError(f"No feature points found in: {input_video_path}")
-
     tracked_data = []
     frame_index = 0
 
@@ -219,6 +217,37 @@ def track_with_lucas_kanade(
             break
 
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        output_frame = frame.copy()
+
+        # If there are no points, try to detect new ones and continue.
+        if p0 is None or len(p0) < 5:
+            p0 = cv2.goodFeaturesToTrack(frame_gray, mask=None, **feature_params)
+
+            cv2.putText(
+                output_frame,
+                f"Frame: {frame_index} | LK points: 0",
+                (20, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2,
+            )
+
+            cv2.putText(
+                output_frame,
+                "Re-detecting feature points",
+                (20, 60),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2,
+            )
+
+            writer.write(output_frame)
+
+            old_gray = frame_gray.copy()
+            frame_index += 1
+            continue
 
         p1, status, error = cv2.calcOpticalFlowPyrLK(
             old_gray,
@@ -228,21 +257,40 @@ def track_with_lucas_kanade(
             **lk_params,
         )
 
+        # If optical flow fails, re-detect points but do not stop the video.
         if p1 is None or status is None:
-            p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
+            p0 = cv2.goodFeaturesToTrack(frame_gray, mask=None, **feature_params)
+
+            cv2.putText(
+                output_frame,
+                f"Frame: {frame_index} | LK points: 0",
+                (20, 30),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2,
+            )
+
+            cv2.putText(
+                output_frame,
+                "Optical flow lost - reinitializing",
+                (20, 60),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.7,
+                (255, 255, 255),
+                2,
+            )
+
+            writer.write(output_frame)
+
             old_gray = frame_gray.copy()
-
-            if p0 is None:
-                break
-
+            frame_index += 1
             continue
 
         good_new = p1[status == 1]
         good_old = p0[status == 1]
 
         displacements = []
-
-        output_frame = frame.copy()
 
         for new_point, old_point in zip(good_new, good_old):
             x_new, y_new = new_point.ravel()
@@ -268,7 +316,6 @@ def track_with_lucas_kanade(
             x_new_i, y_new_i = int(x_new), int(y_new)
             x_old_i, y_old_i = int(x_old), int(y_old)
 
-            # Draw only the current optical flow vector.
             cv2.line(
                 output_frame,
                 (x_old_i, y_old_i),
@@ -313,9 +360,6 @@ def track_with_lucas_kanade(
 
         if len(good_new) < 5:
             p0 = cv2.goodFeaturesToTrack(old_gray, mask=None, **feature_params)
-
-            if p0 is None:
-                break
         else:
             p0 = good_new.reshape(-1, 1, 2)
 
