@@ -15,10 +15,17 @@ OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 SCENARIOS = {
-    "clean": INPUT_DIR / "synthetic_clean_circle.mp4",
-    "noisy": INPUT_DIR / "synthetic_noisy_circle.mp4",
-    "light_change": INPUT_DIR / "synthetic_light_circle.mp4",
-    "fast_motion": INPUT_DIR / "synthetic_fast_circle.mp4",
+    "synthetic_clean_1": INPUT_DIR / "synthetic_clean_1.mp4",
+    "synthetic_clean_2": INPUT_DIR / "synthetic_clean_2.mp4",
+
+    "synthetic_noisy_1": INPUT_DIR / "synthetic_noisy_1.mp4",
+    "synthetic_noisy_2": INPUT_DIR / "synthetic_noisy_2.mp4",
+
+    "synthetic_light_change_1": INPUT_DIR / "synthetic_light_change_1.mp4",
+    "synthetic_light_change_2": INPUT_DIR / "synthetic_light_change_2.mp4",
+
+    "synthetic_fast_1": INPUT_DIR / "synthetic_fast_1.mp4",
+    "synthetic_fast_2": INPUT_DIR / "synthetic_fast_2.mp4",
 }
 
 
