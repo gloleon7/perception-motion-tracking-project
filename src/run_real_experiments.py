@@ -423,7 +423,7 @@ def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
     }
 
 def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
-    if df.empty:
+    if df.empty or "displacement" not in df.columns:
         return {
             "scenario": scenario_name,
             "method": "lucas_kanade",
@@ -436,6 +436,19 @@ def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
         }
 
     displacement = df["displacement"].dropna()
+
+    if displacement.empty:
+        return {
+            "scenario": scenario_name,
+            "method": "lucas_kanade",
+            "detections": 0,
+            "mean_displacement": 0,
+            "median_displacement": 0,
+            "p95_displacement": 0,
+            "max_displacement": 0,
+            "mean_points_per_frame": 0,
+        }
+
     points_per_frame = df.groupby("frame")["displacement"].count()
 
     return {
