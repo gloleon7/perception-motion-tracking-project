@@ -385,7 +385,7 @@ def track_with_lucas_kanade(
 
 
 def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
-    if df.empty:
+    if df.empty or "displacement" not in df.columns:
         return {
             "scenario": scenario_name,
             "method": "frame_difference",
@@ -399,6 +399,18 @@ def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
 
     displacement = df["displacement"].dropna()
 
+    if displacement.empty:
+        return {
+            "scenario": scenario_name,
+            "method": "frame_difference",
+            "detections": len(df),
+            "mean_displacement": 0,
+            "median_displacement": 0,
+            "p95_displacement": 0,
+            "max_displacement": 0,
+            "mean_area": df["area"].mean() if "area" in df.columns else 0,
+        }
+
     return {
         "scenario": scenario_name,
         "method": "frame_difference",
@@ -407,7 +419,7 @@ def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
         "median_displacement": displacement.median(),
         "p95_displacement": displacement.quantile(0.95),
         "max_displacement": displacement.max(),
-        "mean_area": df["area"].mean(),
+        "mean_area": df["area"].mean() if "area" in df.columns else 0,
     }
 
 def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
@@ -458,15 +470,25 @@ def main():
         frame_df = track_with_frame_difference(
             input_video_path=video_path,
             output_video_path=frame_diff_video,
-            threshold_value=45,
-            min_area=2500,
-            kernel_size=9,
+            threshold_value=25,
+            min_area=800,
+            kernel_size=7,
         )
 
         lk_df = track_with_lucas_kanade(
             input_video_path=video_path,
             output_video_path=lk_video,
         )
+
+        frame_columns = ["frame", "x", "y", "area", "displacement"]
+        lk_columns = ["frame", "x_old", "y_old", "x_new", "y_new", "dx", "dy", "displacement"]
+
+        if frame_df.empty:
+            frame_df = pd.DataFrame(columns=frame_columns)
+
+        if lk_df.empty:
+            lk_df = pd.DataFrame(columns=lk_columns)
+
 
         frame_df.to_csv(frame_diff_csv, index=False)
         lk_df.to_csv(lk_csv, index=False)
