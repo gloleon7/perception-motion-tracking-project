@@ -1,4 +1,4 @@
-# Seguimiento visual de objetos móviles en vídeo
+﻿# Seguimiento visual de objetos móviles en vídeo
 
 Proyecto de la asignatura **Percepción en Automática y Robótica**.
 
@@ -122,7 +122,7 @@ Los vídeos reales se colocan en:
 data/input_videos/
 ```
 
-La configuración prevista utiliza dos vídeos por escenario:
+La configuración utilizada en los experimentos finales incluye dos vídeos por escenario:
 
 | Archivo | Escenario | Objetivo |
 |---|---|---|
@@ -134,6 +134,8 @@ La configuración prevista utiliza dos vídeos por escenario:
 | `real_light_change_2.mp4` | Cambio de iluminación | Segunda toma con cambio de luz |
 | `real_fast_1.mp4` | Movimiento rápido | Análisis de limitaciones ante movimiento rápido |
 | `real_fast_2.mp4` | Movimiento rápido | Segunda toma con movimiento rápido |
+
+> Nota: el análisis final utiliza únicamente los vídeos con nombres `real_*_1.mp4` y `real_*_2.mp4`. La carpeta `backup/` conserva versiones anteriores o auxiliares que no forman parte de los experimentos finales.
 
 Los vídeos con ruido y los vídeos con cambio de iluminación pueden prepararse previamente a partir de las tomas normales, modificando artificialmente la imagen para simular peor calidad visual o variaciones globales de iluminación.
 
@@ -208,6 +210,7 @@ percep/
 │
 ├── data/
 │   ├── input_videos/
+│   │   └── backup/
 │   ├── synthetic_videos/
 │   └── dataset_description.csv
 │
@@ -382,6 +385,8 @@ lucas_kanade_real_normal_1.mp4
 frame_difference_real_fast_1.mp4
 lucas_kanade_real_fast_1.mp4
 ```
+
+Los vídeos procesados no tienen por qué estar subidos al repositorio, ya que pueden regenerarse ejecutando los scripts.
 
 ### Gráficas y datos sintéticos
 
