@@ -11,15 +11,15 @@ El objetivo del proyecto es implementar y comparar técnicas de estimación de m
 El proyecto compara dos métodos clásicos de estimación de movimiento:
 
 1. **Diferencia de imágenes**
-   - Compara frames consecutivos.
-   - Detecta las zonas que han cambiado.
+   - Compara fotogramas consecutivos.
+   - Detecta las zonas de la imagen que han cambiado.
    - Extrae la región principal de movimiento.
    - Calcula el centroide del objeto o región móvil.
    - Permite estimar una trayectoria aproximada.
 
 2. **Flujo óptico Lucas-Kanade**
    - Detecta puntos característicos en la imagen.
-   - Sigue esos puntos entre frames consecutivos.
+   - Sigue esos puntos entre fotogramas consecutivos.
    - Calcula el desplazamiento de los puntos.
    - Permite estimar la dirección y magnitud del movimiento local.
 
@@ -77,6 +77,7 @@ El proyecto utiliza un **dataset propio**, dividido en dos partes:
 1. **Vídeos sintéticos generados por código**
    - Permiten validar los algoritmos en condiciones controladas.
    - Se usan para estudiar casos concretos como ruido, cambios de iluminación y movimiento rápido.
+   - Se generan mediante el script `generate_synthetic_scenarios_v2.py`.
 
 2. **Vídeos reales grabados por el grupo**
    - Permiten probar los métodos en una situación más cercana a una aplicación real.
@@ -87,16 +88,29 @@ El proyecto utiliza un **dataset propio**, dividido en dos partes:
 
 ## 5. Vídeos sintéticos
 
-Los vídeos sintéticos se generan mediante código Python y OpenCV.
+Los vídeos sintéticos se generan mediante Python y OpenCV.
+
+Se utilizan dos objetos distintos:
+
+| Ejemplo | Objeto | Fondo |
+|---|---|---|
+| `_1` | Círculo | Fondo oscuro |
+| `_2` | Cuadrado | Fondo azul |
+
+Cada objeto se evalúa en los mismos escenarios:
 
 | Archivo | Escenario | Objetivo |
 |---|---|---|
-| `synthetic_clean_circle.mp4` | Caso limpio | Validación básica |
-| `synthetic_noisy_circle.mp4` | Ruido | Robustez ante ruido |
-| `synthetic_light_circle.mp4` | Cambio de iluminación | Robustez ante variaciones de luz |
-| `synthetic_fast_circle.mp4` | Movimiento rápido | Análisis de limitaciones ante desplazamientos rápidos |
+| `synthetic_clean_1.mp4` | Limpio | Validación básica con círculo |
+| `synthetic_clean_2.mp4` | Limpio | Validación básica con cuadrado |
+| `synthetic_noisy_1.mp4` | Ruido | Robustez ante ruido con círculo |
+| `synthetic_noisy_2.mp4` | Ruido | Robustez ante ruido con cuadrado |
+| `synthetic_light_change_1.mp4` | Cambio de iluminación | Robustez ante variaciones de luz con círculo |
+| `synthetic_light_change_2.mp4` | Cambio de iluminación | Robustez ante variaciones de luz con cuadrado |
+| `synthetic_fast_1.mp4` | Movimiento rápido | Análisis ante desplazamientos rápidos con círculo |
+| `synthetic_fast_2.mp4` | Movimiento rápido | Análisis ante desplazamientos rápidos con cuadrado |
 
-Estos vídeos permiten comprobar que los métodos funcionan correctamente en condiciones controladas antes de aplicarlos a vídeos reales.
+Estos vídeos permiten comprobar el comportamiento de los métodos en condiciones controladas antes de aplicarlos a vídeos reales.
 
 ---
 
@@ -121,13 +135,7 @@ La configuración prevista utiliza dos vídeos por escenario:
 | `real_fast_1.mp4` | Movimiento rápido | Análisis de limitaciones ante movimiento rápido |
 | `real_fast_2.mp4` | Movimiento rápido | Segunda toma con movimiento rápido |
 
-Los vídeos con ruido pueden generarse automáticamente a partir de los vídeos normales mediante el script:
-
-```bash
-python src/create_noisy_real_video.py
-```
-
-De esta forma, el ruido añadido es controlado y reproducible.
+Los vídeos con ruido y los vídeos con cambio de iluminación pueden prepararse previamente a partir de las tomas normales, modificando artificialmente la imagen para simular peor calidad visual o variaciones globales de iluminación.
 
 ---
 
@@ -135,17 +143,17 @@ De esta forma, el ruido añadido es controlado y reproducible.
 
 ### 7.1. Diferencia de imágenes
 
-El método compara dos frames consecutivos:
+El método compara dos fotogramas consecutivos:
 
 ```text
-motion = |frame_actual - frame_anterior|
+motion = |fotograma_actual - fotograma_anterior|
 ```
 
 Después se aplican los siguientes pasos:
 
 1. Conversión a escala de grises.
 2. Suavizado mediante filtro gaussiano.
-3. Diferencia absoluta entre frames.
+3. Diferencia absoluta entre fotogramas.
 4. Umbralización.
 5. Operaciones morfológicas para limpiar la máscara.
 6. Detección de contornos.
@@ -160,12 +168,12 @@ Este método es sencillo y rápido, pero puede fallar cuando hay cambios de ilum
 
 ### 7.2. Lucas-Kanade Optical Flow
 
-Lucas-Kanade estima el movimiento de puntos característicos entre frames consecutivos.
+Lucas-Kanade estima el movimiento de puntos característicos entre fotogramas consecutivos.
 
 El procedimiento seguido es:
 
 1. Detectar puntos característicos.
-2. Calcular el flujo óptico entre frames consecutivos.
+2. Calcular el flujo óptico entre fotogramas consecutivos.
 3. Obtener la nueva posición de cada punto.
 4. Dibujar los desplazamientos recientes.
 5. Calcular el desplazamiento de los puntos.
@@ -181,7 +189,7 @@ Para comparar ambos métodos se calculan varias métricas:
 
 | Métrica | Descripción |
 |---|---|
-| `detections` | Número de frames o detecciones procesadas |
+| `detections` | Número de fotogramas o detecciones procesadas |
 | `mean_displacement` | Desplazamiento medio |
 | `median_displacement` | Mediana del desplazamiento |
 | `p95_displacement` | Percentil 95 del desplazamiento |
@@ -196,27 +204,12 @@ La mediana y el percentil 95 son especialmente útiles en vídeos reales, porque
 ## 9. Estructura del proyecto
 
 ```text
-motion-tracking-project/
+percep/
 │
 ├── data/
 │   ├── input_videos/
 │   ├── synthetic_videos/
 │   └── dataset_description.csv
-│
-├── references/
-│   ├── practices/
-│   └── theory/
-│
-├── outputs/
-│   ├── processed_videos/
-│   │   ├── synthetic/
-│   │   └── real/
-│   │
-│   ├── plots/
-│   │   ├── synthetic/
-│   │   └── real/
-│   │
-│   └── frames/
 │
 ├── notebooks/
 │   ├── 01_frame_difference_tracking.ipynb
@@ -225,10 +218,23 @@ motion-tracking-project/
 │   ├── 04_analyze_synthetic_results.ipynb
 │   └── 05_analyze_real_results.ipynb
 │
+├── outputs/
+│   ├── frames/
+│   ├── plots/
+│   │   ├── synthetic/
+│   │   └── real/
+│   │
+│   └── processed_videos/
+│       ├── synthetic/
+│       └── real/
+│
+├── references/
+│   └── practices/
+│       ├── P3.ipynb
+│       └── P4.ipynb
+│
 ├── src/
-│   ├── create_noisy_real_video.py
-│   ├── generate_synthetic_video.py
-│   ├── generate_synthetic_scenarios.py
+│   ├── generate_synthetic_scenarios_v2.py
 │   ├── run_synthetic_experiments.py
 │   └── run_real_experiments.py
 │
@@ -259,12 +265,6 @@ Instalar las dependencias:
 pip install -r requirements.txt
 ```
 
-Si todavía no existe el archivo `requirements.txt`, se puede generar con:
-
-```bash
-pip freeze > requirements.txt
-```
-
 ---
 
 ## 11. Ejecución del proyecto
@@ -272,7 +272,7 @@ pip freeze > requirements.txt
 ### 11.1. Generar vídeos sintéticos
 
 ```bash
-python src/generate_synthetic_scenarios.py
+python src/generate_synthetic_scenarios_v2.py
 ```
 
 Este comando genera los vídeos sintéticos en:
@@ -303,23 +303,15 @@ outputs/plots/synthetic/
 
 ---
 
-### 11.3. Generar vídeos reales con ruido
+### 11.3. Ejecutar experimentos reales
 
-Si se quieren generar los vídeos con ruido a partir de las tomas normales:
-
-```bash
-python src/create_noisy_real_video.py
-```
-
-Los vídeos generados se guardan en:
+Antes de ejecutar los experimentos reales, los vídeos deben estar en:
 
 ```text
 data/input_videos/
 ```
 
----
-
-### 11.4. Ejecutar experimentos reales
+Después se ejecuta:
 
 ```bash
 python src/run_real_experiments.py
@@ -353,7 +345,7 @@ Los notebooks se pueden ejecutar en este orden:
 |---|---|
 | `01_frame_difference_tracking.ipynb` | Explica y prueba el método de diferencia de imágenes |
 | `02_lucas_kanade_tracking.ipynb` | Explica y prueba el método Lucas-Kanade |
-| `03_compare_methods_synthetic.ipynb` | Compara ambos métodos en el caso sintético base |
+| `03_compare_methods_synthetic.ipynb` | Compara ambos métodos en un escenario sintético concreto |
 | `04_analyze_synthetic_results.ipynb` | Analiza todos los escenarios sintéticos |
 | `05_analyze_real_results.ipynb` | Analiza todos los vídeos reales |
 
@@ -370,14 +362,10 @@ outputs/processed_videos/synthetic/
 Ejemplos:
 
 ```text
-frame_difference_clean.mp4
-lucas_kanade_clean.mp4
-frame_difference_noisy.mp4
-lucas_kanade_noisy.mp4
-frame_difference_light_change.mp4
-lucas_kanade_light_change.mp4
-frame_difference_fast_motion.mp4
-lucas_kanade_fast_motion.mp4
+frame_difference_synthetic_clean_1.mp4
+lucas_kanade_synthetic_clean_1.mp4
+frame_difference_synthetic_noisy_1.mp4
+lucas_kanade_synthetic_noisy_1.mp4
 ```
 
 ### Vídeos procesados reales
@@ -391,8 +379,8 @@ Ejemplos:
 ```text
 frame_difference_real_normal_1.mp4
 lucas_kanade_real_normal_1.mp4
-frame_difference_real_normal_2.mp4
-lucas_kanade_real_normal_2.mp4
+frame_difference_real_fast_1.mp4
+lucas_kanade_real_fast_1.mp4
 ```
 
 ### Gráficas y datos sintéticos
@@ -410,6 +398,8 @@ summary_median_displacement.png
 summary_p95_displacement.png
 summary_max_displacement.png
 summary_detections.png
+summary_frame_difference_mean_area.png
+summary_lucas_kanade_mean_points.png
 ```
 
 ### Gráficas y datos reales
