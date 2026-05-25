@@ -2,9 +2,14 @@
 __pycache__/
 .ipynb_checkpoints/
 
-outputs/
 *.avi
 *.mp4
+*.mov
+*.MOV
+
+outputs/processed_videos/**/*.mp4
+outputs/plots/**/*.csv
+outputs/plots/**/*.png
 
 .DS_Store
 Thumbs.db
