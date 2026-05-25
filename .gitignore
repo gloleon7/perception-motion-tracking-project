@@ -2,9 +2,9 @@
 __pycache__/
 .ipynb_checkpoints/
 
+# No subir vídeos procesados generados
 outputs/processed_videos/**/*.mp4
-outputs/plots/**/*.csv
-outputs/plots/**/*.png
 
+# Archivos del sistema
 .DS_Store
 Thumbs.db
