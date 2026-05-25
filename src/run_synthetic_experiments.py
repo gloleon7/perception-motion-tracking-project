@@ -12,7 +12,20 @@ OUTPUT_PLOTS_DIR = PROJECT_DIR / "outputs" / "plots" / "synthetic"
 
 OUTPUT_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+def clear_previous_outputs() -> None:
+    """
+    Delete previous synthetic outputs before running the experiments again.
+    This avoids mixing old CSV files, plots or processed videos with new results.
+    """
 
+    for file in OUTPUT_VIDEO_DIR.glob("*.mp4"):
+        file.unlink()
+
+    for file in OUTPUT_PLOTS_DIR.glob("*.csv"):
+        file.unlink()
+
+    for file in OUTPUT_PLOTS_DIR.glob("*.png"):
+        file.unlink()
 
 SCENARIOS = {
     "synthetic_clean_1": INPUT_DIR / "synthetic_clean_1.mp4",
@@ -378,6 +391,7 @@ def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
     }
 
 def main():
+    clear_previous_outputs()
     all_summaries = []
 
     for scenario_name, video_path in SCENARIOS.items():

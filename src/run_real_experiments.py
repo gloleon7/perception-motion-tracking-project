@@ -12,7 +12,20 @@ OUTPUT_PLOTS_DIR = PROJECT_DIR / "outputs" / "plots" / "real"
 
 OUTPUT_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+def clear_previous_outputs() -> None:
+    """
+    Delete previous real video outputs before running the experiments again.
+    This avoids mixing old CSV files, plots or processed videos with new results.
+    """
 
+    for file in OUTPUT_VIDEO_DIR.glob("*.mp4"):
+        file.unlink()
+
+    for file in OUTPUT_PLOTS_DIR.glob("*.csv"):
+        file.unlink()
+
+    for file in OUTPUT_PLOTS_DIR.glob("*.png"):
+        file.unlink()
 
 SCENARIOS = {
     "real_normal_1": INPUT_DIR / "real_normal_1.mp4",
