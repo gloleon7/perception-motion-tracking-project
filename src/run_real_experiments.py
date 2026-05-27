@@ -14,8 +14,6 @@ OUTPUT_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
 
 
-# Set this to None if you want to process the original resolution.
-# A fixed long side makes vertical/horizontal and 4K videos more manageable.
 TARGET_LONG_SIDE = 1280
 
 
@@ -40,7 +38,7 @@ def resize_frame(frame: np.ndarray, target_long_side: int | None = TARGET_LONG_S
     new_width = int(round(width * scale))
     new_height = int(round(height * scale))
 
-    # Video encoders usually work better with even dimensions.
+    
     if new_width % 2 != 0:
         new_width -= 1
 
@@ -82,8 +80,7 @@ def clear_previous_outputs() -> None:
         file.unlink()
 
 
-# Use [1, 2, 3, 4] to process all real videos.
-# Use [3, 4] if you only want to process the new videos.
+
 VIDEO_IDS = [1, 2, 3, 4]
 
 CONDITIONS = [

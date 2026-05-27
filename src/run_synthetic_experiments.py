@@ -279,7 +279,7 @@ def track_with_lucas_kanade(
             x_new_i, y_new_i = int(x_new), int(y_new)
             x_old_i, y_old_i = int(x_old), int(y_old)
 
-            # Draw only the current optical flow vector.
+            
             cv2.line(
                 output_frame,
                 (x_old_i, y_old_i),
