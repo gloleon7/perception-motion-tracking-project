@@ -2,7 +2,9 @@
 
 Proyecto de la asignatura **Percepción en Automática y Robótica**.
 
-El objetivo del proyecto es implementar y comparar técnicas de estimación de movimiento para el seguimiento visual de objetos móviles en secuencias de vídeo. La aplicación planteada está orientada a entornos interiores, donde este tipo de análisis puede ser útil para robótica móvil, vigilancia, análisis de movimiento o detección de obstáculos dinámicos.
+El objetivo del proyecto es implementar y comparar técnicas clásicas de estimación de movimiento para el seguimiento visual de objetos móviles en secuencias de vídeo. El trabajo se centra en analizar el comportamiento de dos métodos: **diferencia de imágenes** y **flujo óptico Lucas-Kanade**.
+
+La aplicación planteada está orientada a escenas con cámara fija, donde se desea detectar y analizar movimiento de forma sencilla. Este tipo de sistema puede ser útil en vigilancia automática, análisis de movimiento, seguimiento de objetos, detección de actividad en una escena o como etapa previa en sistemas de percepción para robótica.
 
 ---
 
@@ -10,188 +12,223 @@ El objetivo del proyecto es implementar y comparar técnicas de estimación de m
 
 El proyecto compara dos métodos clásicos de estimación de movimiento:
 
-1. **Diferencia de imágenes**
-   - Compara fotogramas consecutivos.
-   - Detecta las zonas de la imagen que han cambiado.
-   - Extrae la región principal de movimiento.
-   - Calcula el centroide del objeto o región móvil.
-   - Permite estimar una trayectoria aproximada.
+### 1.1. Diferencia de imágenes
 
-2. **Flujo óptico Lucas-Kanade**
-   - Detecta puntos característicos en la imagen.
-   - Sigue esos puntos entre fotogramas consecutivos.
-   - Calcula el desplazamiento de los puntos.
-   - Permite estimar la dirección y magnitud del movimiento local.
+La diferencia de imágenes compara frames consecutivos para detectar qué zonas de la imagen han cambiado.
 
-La finalidad del proyecto es analizar cómo se comportan ambos métodos en diferentes condiciones: vídeo limpio, ruido, cambios de iluminación y movimiento rápido.
+Este método permite:
+
+- detectar regiones móviles;
+- extraer el contorno principal de movimiento;
+- calcular un bounding box;
+- obtener el centroide de la región detectada;
+- estimar una trayectoria aproximada del objeto o región móvil.
+
+Es un método sencillo y rápido, pero sensible a ruido, sombras, cambios de iluminación y elementos secundarios que también puedan moverse en la escena.
+
+### 1.2. Flujo óptico Lucas-Kanade
+
+Lucas-Kanade es un método de flujo óptico que sigue puntos característicos entre frames consecutivos.
+
+Este método permite:
+
+- detectar puntos relevantes en la imagen;
+- seguir esos puntos a lo largo del vídeo;
+- calcular el desplazamiento de cada punto;
+- estimar la dirección y magnitud del movimiento local;
+- analizar la estabilidad del seguimiento mediante el número de puntos mantenidos.
+
+A diferencia de la diferencia de imágenes, Lucas-Kanade no trabaja con una región completa, sino con puntos característicos. Por eso puede ser más estable en algunas escenas, aunque depende de que existan puntos con textura suficiente.
 
 ---
 
-## 2. Relación con la asignatura
+## 2. Objetivo del proyecto
 
-El proyecto está relacionado principalmente con los siguientes contenidos de la asignatura:
+El objetivo principal es comparar ambos métodos bajo diferentes condiciones de vídeo para estudiar su robustez.
+
+Las condiciones evaluadas son:
+
+- movimiento normal;
+- vídeo con ruido;
+- cambios de iluminación;
+- movimiento rápido.
+
+A partir de estas condiciones se pretende responder a la siguiente pregunta:
+
+> ¿Qué método mantiene una estimación de movimiento más estable cuando cambian las condiciones de la escena?
+
+---
+
+## 3. Relación con la asignatura
+
+El proyecto está relacionado principalmente con los contenidos de procesamiento de imágenes y estimación de movimiento vistos en la asignatura.
 
 ### Tema 3: Procesamiento de imágenes
 
-- Conversión a escala de grises.
-- Filtrado gaussiano.
-- Umbralización.
-- Detección de contornos.
-- Procesamiento píxel a píxel y por vecindad.
-- Extracción de características visuales.
+El proyecto utiliza conceptos como:
+
+- conversión a escala de grises;
+- filtrado gaussiano;
+- umbralización;
+- operaciones morfológicas;
+- detección de contornos;
+- extracción de características visuales;
+- procesamiento píxel a píxel y por vecindad.
 
 ### Tema 5: Estimación de movimiento
 
-- Diferencia de imágenes.
-- Procesamiento de secuencias de vídeo.
-- Flujo óptico.
-- Método de Lucas-Kanade.
-- Seguimiento de objetos.
-- Cálculo de trayectorias.
-- Interpretación del movimiento en secuencias de imágenes.
+El proyecto también aplica contenidos de estimación de movimiento, como:
 
-También se relaciona con las prácticas de procesamiento de imágenes, detección de características y estimación de movimiento.
-
----
-
-## 3. Aplicación real
-
-Este tipo de análisis puede aplicarse en:
-
-- Robótica móvil.
-- Detección de obstáculos dinámicos.
-- Vigilancia automática.
-- Seguimiento de objetos.
-- Seguimiento de personas.
-- Navegación visual.
-- Análisis de movimiento en escenas interiores.
-
-La diferencia de imágenes puede ser útil para detectar rápidamente zonas de movimiento. Lucas-Kanade, por su parte, permite seguir puntos concretos y estimar desplazamientos locales con mayor estabilidad en algunos escenarios.
+- diferencia de imágenes;
+- procesamiento de secuencias de vídeo;
+- flujo óptico;
+- método de Lucas-Kanade;
+- seguimiento de puntos;
+- cálculo de trayectorias;
+- análisis del desplazamiento entre frames.
 
 ---
 
-## 4. Dataset utilizado
+## 4. Aplicación real
 
-El proyecto utiliza un **dataset propio**, dividido en dos partes:
+Una aplicación sencilla del proyecto sería una cámara fija situada en una escena cotidiana, por ejemplo la entrada de una vivienda, una mesa de trabajo o una zona de paso.
+
+El sistema no necesita reconocer exactamente qué objeto aparece en la imagen. Su objetivo es detectar que existe movimiento y estimar cómo se desplaza.
+
+Por ejemplo, una cámara podría detectar:
+
+- una persona acercándose a una puerta;
+- un objeto moviéndose sobre una mesa;
+- un paquete siendo colocado en una entrada;
+- actividad en una zona vigilada;
+- movimiento en una escena interior controlada.
+
+La diferencia de imágenes puede utilizarse como una primera etapa para detectar actividad en la escena. Lucas-Kanade puede complementar este análisis siguiendo puntos concretos y estimando desplazamientos más localizados.
+
+---
+
+## 5. Dataset utilizado
+
+El proyecto utiliza un dataset propio, dividido en dos partes:
 
 1. **Vídeos sintéticos generados por código**
-   - Permiten validar los algoritmos en condiciones controladas.
-   - Se usan para estudiar casos concretos como ruido, cambios de iluminación y movimiento rápido.
-   - Se generan mediante el script `generate_synthetic_scenarios_v2.py`.
+2. **Vídeos reales**
 
-2. **Vídeos reales grabados por el grupo**
-   - Permiten probar los métodos en una situación más cercana a una aplicación real.
-   - Se graban con cámara fija, fondo relativamente estable y un objeto móvil con textura.
-   - Para cada escenario real se utilizan dos tomas diferentes, con el objetivo de no basar el análisis en un único ejemplo.
+Esta división permite analizar primero los métodos en un entorno controlado y después probarlos en vídeos reales, donde aparecen condiciones más cercanas a una aplicación práctica.
 
 ---
 
-## 5. Vídeos sintéticos
+## 6. Vídeos sintéticos
 
 Los vídeos sintéticos se generan mediante Python y OpenCV.
 
-Se utilizan dos objetos distintos:
-
-| Ejemplo | Objeto | Fondo |
-|---|---|---|
-| `_1` | Círculo | Fondo oscuro |
-| `_2` | Cuadrado | Fondo azul |
-
-Cada objeto se evalúa en los mismos escenarios:
+Estos vídeos permiten controlar el movimiento, la forma del objeto y las condiciones de la escena. De esta forma se puede comprobar que los métodos funcionan correctamente antes de pasar a vídeos reales.
 
 | Archivo | Escenario | Objetivo |
 |---|---|---|
-| `synthetic_clean_1.mp4` | Limpio | Validación básica con círculo |
-| `synthetic_clean_2.mp4` | Limpio | Validación básica con cuadrado |
-| `synthetic_noisy_1.mp4` | Ruido | Robustez ante ruido con círculo |
-| `synthetic_noisy_2.mp4` | Ruido | Robustez ante ruido con cuadrado |
-| `synthetic_light_change_1.mp4` | Cambio de iluminación | Robustez ante variaciones de luz con círculo |
-| `synthetic_light_change_2.mp4` | Cambio de iluminación | Robustez ante variaciones de luz con cuadrado |
-| `synthetic_fast_1.mp4` | Movimiento rápido | Análisis ante desplazamientos rápidos con círculo |
-| `synthetic_fast_2.mp4` | Movimiento rápido | Análisis ante desplazamientos rápidos con cuadrado |
+| `synthetic_clean_circle.mp4` | Caso limpio | Validación básica del movimiento |
+| `synthetic_noisy_circle.mp4` | Ruido | Evaluar robustez ante ruido |
+| `synthetic_light_circle.mp4` | Cambio de iluminación | Evaluar sensibilidad ante variaciones de luz |
+| `synthetic_fast_circle.mp4` | Movimiento rápido | Analizar el comportamiento ante desplazamientos rápidos |
 
-Estos vídeos permiten comprobar el comportamiento de los métodos en condiciones controladas antes de aplicarlos a vídeos reales.
+Los escenarios sintéticos permiten observar el comportamiento de los algoritmos en condiciones controladas. Esto resulta útil porque el movimiento esperado es conocido y las diferencias entre escenarios están introducidas de forma intencionada.
 
 ---
 
-## 6. Vídeos reales
+## 7. Vídeos reales
 
-Los vídeos reales se colocan en:
+Los vídeos reales se colocan en la carpeta:
 
 ```text
 data/input_videos/
 ```
 
-La configuración utilizada en los experimentos finales incluye dos vídeos por escenario:
+El conjunto real final está formado por cuatro condiciones de prueba:
+
+- movimiento normal;
+- ruido;
+- cambio de iluminación;
+- movimiento rápido.
+
+Para cada condición se utilizan cuatro escenarios reales, numerados del `1` al `4`.
 
 | Archivo | Escenario | Objetivo |
 |---|---|---|
 | `real_normal_1.mp4` | Movimiento normal | Validación real básica |
 | `real_normal_2.mp4` | Movimiento normal | Segunda toma del caso normal |
-| `real_noisy_1.mp4` | Vídeo con ruido | Robustez ante ruido |
+| `real_normal_3.mp4` | Movimiento normal | Tercera toma del caso normal |
+| `real_normal_4.mp4` | Movimiento normal | Cuarta toma del caso normal |
+| `real_noisy_1.mp4` | Vídeo con ruido | Evaluar robustez ante ruido |
 | `real_noisy_2.mp4` | Vídeo con ruido | Segunda toma con ruido |
-| `real_light_change_1.mp4` | Cambio de iluminación | Robustez ante variaciones de luz |
+| `real_noisy_3.mp4` | Vídeo con ruido | Tercera toma con ruido |
+| `real_noisy_4.mp4` | Vídeo con ruido | Cuarta toma con ruido |
+| `real_light_change_1.mp4` | Cambio de iluminación | Evaluar sensibilidad ante variaciones de luz |
 | `real_light_change_2.mp4` | Cambio de iluminación | Segunda toma con cambio de luz |
-| `real_fast_1.mp4` | Movimiento rápido | Análisis de limitaciones ante movimiento rápido |
+| `real_light_change_3.mp4` | Cambio de iluminación | Tercera toma con cambio de luz |
+| `real_light_change_4.mp4` | Cambio de iluminación | Cuarta toma con cambio de luz |
+| `real_fast_1.mp4` | Movimiento rápido | Evaluar el comportamiento ante movimiento rápido |
 | `real_fast_2.mp4` | Movimiento rápido | Segunda toma con movimiento rápido |
+| `real_fast_3.mp4` | Movimiento rápido | Tercera toma con movimiento rápido |
+| `real_fast_4.mp4` | Movimiento rápido | Cuarta toma con movimiento rápido |
 
-> Nota: el análisis final utiliza únicamente los vídeos con nombres `real_*_1.mp4` y `real_*_2.mp4`. La carpeta `backup/` conserva versiones anteriores o auxiliares que no forman parte de los experimentos finales.
-
-Los vídeos con ruido y los vídeos con cambio de iluminación pueden prepararse previamente a partir de las tomas normales, modificando artificialmente la imagen para simular peor calidad visual o variaciones globales de iluminación.
+Las versiones con ruido, cambio de iluminación y movimiento rápido se generan a partir de los vídeos normales. De esta forma, los escenarios modificados parten de una base visual comparable, y el cambio principal entre vídeos es la condición evaluada: ruido, luminosidad o velocidad.
 
 ---
 
-## 7. Métodos implementados
+## 8. Métodos implementados
 
-### 7.1. Diferencia de imágenes
+## 8.1. Diferencia de imágenes
 
-El método compara dos fotogramas consecutivos:
+El método de diferencia de imágenes compara dos frames consecutivos:
 
 ```text
-motion = |fotograma_actual - fotograma_anterior|
+motion = |frame_actual - frame_anterior|
 ```
 
-Después se aplican los siguientes pasos:
+El pipeline seguido es:
 
-1. Conversión a escala de grises.
-2. Suavizado mediante filtro gaussiano.
-3. Diferencia absoluta entre fotogramas.
-4. Umbralización.
-5. Operaciones morfológicas para limpiar la máscara.
-6. Detección de contornos.
-7. Selección del contorno principal.
-8. Cálculo del centroide.
-9. Dibujo del bounding box y centroide.
-10. Exportación de métricas.
+1. Leer el vídeo frame a frame.
+2. Convertir cada frame a escala de grises.
+3. Aplicar un filtro gaussiano para suavizar ruido.
+4. Calcular la diferencia absoluta entre el frame actual y el anterior.
+5. Aplicar un umbral para obtener una máscara binaria de movimiento.
+6. Aplicar operaciones morfológicas para limpiar la máscara.
+7. Detectar contornos.
+8. Seleccionar el contorno principal.
+9. Calcular el bounding box y el centroide.
+10. Guardar el vídeo procesado y las métricas obtenidas.
 
-Este método es sencillo y rápido, pero puede fallar cuando hay cambios de iluminación, sombras, ruido o movimiento de elementos secundarios.
-
----
-
-### 7.2. Lucas-Kanade Optical Flow
-
-Lucas-Kanade estima el movimiento de puntos característicos entre fotogramas consecutivos.
-
-El procedimiento seguido es:
-
-1. Detectar puntos característicos.
-2. Calcular el flujo óptico entre fotogramas consecutivos.
-3. Obtener la nueva posición de cada punto.
-4. Dibujar los desplazamientos recientes.
-5. Calcular el desplazamiento de los puntos.
-6. Exportar métricas para análisis.
-
-Este método es más adecuado para seguir puntos concretos, aunque puede verse afectado por ruido, cambios bruscos de iluminación o movimientos demasiado rápidos.
+Este método permite detectar regiones móviles de forma directa. Sin embargo, no distingue si el cambio se debe a un objeto en movimiento, una sombra, ruido o una variación global de iluminación.
 
 ---
 
-## 8. Métricas utilizadas
+## 8.2. Lucas-Kanade Optical Flow
 
-Para comparar ambos métodos se calculan varias métricas:
+Lucas-Kanade estima el movimiento de puntos característicos entre frames consecutivos.
+
+El pipeline seguido es:
+
+1. Leer el vídeo frame a frame.
+2. Convertir el primer frame a escala de grises.
+3. Detectar puntos característicos.
+4. Calcular el flujo óptico entre el frame anterior y el frame actual.
+5. Obtener la nueva posición de cada punto.
+6. Calcular el desplazamiento de cada punto.
+7. Dibujar las líneas de desplazamiento y los puntos seguidos.
+8. Re-detectar puntos si el seguimiento se pierde.
+9. Guardar el vídeo procesado y las métricas obtenidas.
+
+Este método permite analizar el movimiento de forma más localizada. Su rendimiento depende de que existan puntos característicos suficientes y de que el desplazamiento entre frames no sea demasiado brusco.
+
+---
+
+## 9. Métricas utilizadas
+
+Para comparar ambos métodos se calculan varias métricas.
 
 | Métrica | Descripción |
 |---|---|
-| `detections` | Número de fotogramas o detecciones procesadas |
+| `detections` | Número de detecciones o frames con información útil |
 | `mean_displacement` | Desplazamiento medio |
 | `median_displacement` | Mediana del desplazamiento |
 | `p95_displacement` | Percentil 95 del desplazamiento |
@@ -199,20 +236,39 @@ Para comparar ambos métodos se calculan varias métricas:
 | `mean_area` | Área media detectada por diferencia de imágenes |
 | `mean_points_per_frame` | Número medio de puntos seguidos por Lucas-Kanade |
 
-La mediana y el percentil 95 son especialmente útiles en vídeos reales, porque el desplazamiento máximo puede verse afectado por errores puntuales u outliers.
+La media y el máximo pueden verse afectados por errores puntuales. Por eso, en el análisis se da especial importancia a:
+
+- **mediana del desplazamiento**, porque representa el comportamiento típico del método;
+- **percentil 95**, porque permite detectar saltos grandes sin depender solo del máximo;
+- **área media**, para estudiar cómo responde la diferencia de imágenes;
+- **puntos medios por frame**, para estudiar la calidad del seguimiento de Lucas-Kanade.
 
 ---
 
-## 9. Estructura del proyecto
+## 10. Estructura del proyecto
 
 ```text
-percep/
+motion-tracking-project/
 │
 ├── data/
 │   ├── input_videos/
-│   │   └── backup/
 │   ├── synthetic_videos/
 │   └── dataset_description.csv
+│
+├── references/
+│   ├── practices/
+│   └── theory/
+│
+├── outputs/
+│   ├── processed_videos/
+│   │   ├── synthetic/
+│   │   └── real/
+│   │
+│   ├── plots/
+│   │   ├── synthetic/
+│   │   └── real/
+│   │
+│   └── frames/
 │
 ├── notebooks/
 │   ├── 01_frame_difference_tracking.ipynb
@@ -221,23 +277,10 @@ percep/
 │   ├── 04_analyze_synthetic_results.ipynb
 │   └── 05_analyze_real_results.ipynb
 │
-├── outputs/
-│   ├── frames/
-│   ├── plots/
-│   │   ├── synthetic/
-│   │   └── real/
-│   │
-│   └── processed_videos/
-│       ├── synthetic/
-│       └── real/
-│
-├── references/
-│   └── practices/
-│       ├── P3.ipynb
-│       └── P4.ipynb
-│
 ├── src/
-│   ├── generate_synthetic_scenarios_v2.py
+│   ├── create_noisy_real_video.py
+│   ├── generate_synthetic_video.py
+│   ├── generate_synthetic_scenarios.py
 │   ├── run_synthetic_experiments.py
 │   └── run_real_experiments.py
 │
@@ -248,7 +291,7 @@ percep/
 
 ---
 
-## 10. Instalación
+## 11. Instalación
 
 Crear un entorno virtual:
 
@@ -262,7 +305,7 @@ Activar el entorno en Windows:
 .venv\Scripts\activate
 ```
 
-Instalar las dependencias:
+Instalar dependencias:
 
 ```bash
 pip install -r requirements.txt
@@ -270,15 +313,15 @@ pip install -r requirements.txt
 
 ---
 
-## 11. Ejecución del proyecto
+## 12. Ejecución del proyecto
 
-### 11.1. Generar vídeos sintéticos
+### 12.1. Generar vídeos sintéticos
 
 ```bash
-python src/generate_synthetic_scenarios_v2.py
+python src/generate_synthetic_scenarios.py
 ```
 
-Este comando genera los vídeos sintéticos en:
+Los vídeos generados se guardan en:
 
 ```text
 data/synthetic_videos/
@@ -286,13 +329,13 @@ data/synthetic_videos/
 
 ---
 
-### 11.2. Ejecutar experimentos sintéticos
+### 12.2. Ejecutar experimentos sintéticos
 
 ```bash
 python src/run_synthetic_experiments.py
 ```
 
-Este script procesa todos los vídeos sintéticos con:
+Este script procesa todos los vídeos sintéticos con los dos métodos:
 
 - diferencia de imágenes;
 - Lucas-Kanade.
@@ -306,24 +349,17 @@ outputs/plots/synthetic/
 
 ---
 
-### 11.3. Ejecutar experimentos reales
-
-Antes de ejecutar los experimentos reales, los vídeos deben estar en:
-
-```text
-data/input_videos/
-```
-
-Después se ejecuta:
+### 12.3. Ejecutar experimentos reales
 
 ```bash
 python src/run_real_experiments.py
 ```
 
-Este script procesa los vídeos reales con:
+Este script procesa todos los vídeos reales disponibles en:
 
-- diferencia de imágenes;
-- Lucas-Kanade.
+```text
+data/input_videos/
+```
 
 Los resultados se guardan en:
 
@@ -334,29 +370,23 @@ outputs/plots/real/
 
 ---
 
-## 12. Notebooks
+## 13. Notebooks
 
 Los notebooks se pueden ejecutar en este orden:
-
-1. `01_frame_difference_tracking.ipynb`
-2. `02_lucas_kanade_tracking.ipynb`
-3. `03_compare_methods_synthetic.ipynb`
-4. `04_analyze_synthetic_results.ipynb`
-5. `05_analyze_real_results.ipynb`
 
 | Notebook | Descripción |
 |---|---|
 | `01_frame_difference_tracking.ipynb` | Explica y prueba el método de diferencia de imágenes |
 | `02_lucas_kanade_tracking.ipynb` | Explica y prueba el método Lucas-Kanade |
-| `03_compare_methods_synthetic.ipynb` | Compara ambos métodos en un escenario sintético concreto |
+| `03_compare_methods_synthetic.ipynb` | Compara ambos métodos en el caso sintético base |
 | `04_analyze_synthetic_results.ipynb` | Analiza todos los escenarios sintéticos |
 | `05_analyze_real_results.ipynb` | Analiza todos los vídeos reales |
 
 ---
 
-## 13. Salidas generadas
+## 14. Salidas generadas
 
-### Vídeos procesados sintéticos
+### 14.1. Vídeos procesados sintéticos
 
 ```text
 outputs/processed_videos/synthetic/
@@ -365,13 +395,19 @@ outputs/processed_videos/synthetic/
 Ejemplos:
 
 ```text
-frame_difference_synthetic_clean_1.mp4
-lucas_kanade_synthetic_clean_1.mp4
-frame_difference_synthetic_noisy_1.mp4
-lucas_kanade_synthetic_noisy_1.mp4
+frame_difference_clean.mp4
+lucas_kanade_clean.mp4
+frame_difference_noisy.mp4
+lucas_kanade_noisy.mp4
+frame_difference_light_change.mp4
+lucas_kanade_light_change.mp4
+frame_difference_fast_motion.mp4
+lucas_kanade_fast_motion.mp4
 ```
 
-### Vídeos procesados reales
+---
+
+### 14.2. Vídeos procesados reales
 
 ```text
 outputs/processed_videos/real/
@@ -382,13 +418,17 @@ Ejemplos:
 ```text
 frame_difference_real_normal_1.mp4
 lucas_kanade_real_normal_1.mp4
+frame_difference_real_noisy_1.mp4
+lucas_kanade_real_noisy_1.mp4
+frame_difference_real_light_change_1.mp4
+lucas_kanade_real_light_change_1.mp4
 frame_difference_real_fast_1.mp4
 lucas_kanade_real_fast_1.mp4
 ```
 
-Los vídeos procesados no tienen por qué estar subidos al repositorio, ya que pueden regenerarse ejecutando los scripts.
+---
 
-### Gráficas y datos sintéticos
+### 14.3. Resultados sintéticos
 
 ```text
 outputs/plots/synthetic/
@@ -398,16 +438,16 @@ Ejemplos:
 
 ```text
 synthetic_experiments_summary.csv
-summary_mean_displacement.png
-summary_median_displacement.png
-summary_p95_displacement.png
-summary_max_displacement.png
-summary_detections.png
-summary_frame_difference_mean_area.png
-summary_lucas_kanade_mean_points.png
+synthetic_median_displacement.png
+synthetic_p95_displacement.png
+synthetic_mean_displacement.png
+synthetic_max_displacement.png
+synthetic_detections.png
 ```
 
-### Gráficas y datos reales
+---
+
+### 14.4. Resultados reales
 
 ```text
 outputs/plots/real/
@@ -417,9 +457,9 @@ Ejemplos:
 
 ```text
 real_experiments_summary.csv
-real_mean_displacement.png
 real_median_displacement.png
 real_p95_displacement.png
+real_mean_displacement.png
 real_max_displacement.png
 real_detections.png
 real_frame_difference_mean_area.png
@@ -428,40 +468,78 @@ real_lucas_kanade_mean_points.png
 
 ---
 
-## 14. Resultados esperados
+## 15. Análisis de resultados
 
-En los vídeos sintéticos se espera que ambos métodos funcionen correctamente en el caso limpio. En los escenarios con ruido, cambio de iluminación y movimiento rápido aparecen diferencias entre métodos.
+Los resultados se analizan a partir de los archivos CSV generados por los scripts de experimentación.
 
-En los vídeos reales, Lucas-Kanade suele proporcionar un seguimiento más estable de puntos característicos, especialmente si el objeto tiene textura. La diferencia de imágenes permite detectar regiones móviles, pero puede ser más sensible a sombras, cambios de iluminación o movimientos de otros elementos de la escena.
+Para los vídeos sintéticos:
+
+```text
+outputs/plots/synthetic/synthetic_experiments_summary.csv
+```
+
+Para los vídeos reales:
+
+```text
+outputs/plots/real/real_experiments_summary.csv
+```
+
+El análisis compara los dos métodos en función de las métricas obtenidas. No se utiliza únicamente la media del desplazamiento, ya que puede verse afectada por errores puntuales. Por este motivo, se da mayor importancia a la mediana y al percentil 95.
+
+En términos generales:
+
+- la diferencia de imágenes es sencilla, rápida y útil para detectar movimiento;
+- la diferencia de imágenes es sensible a ruido, sombras y cambios de iluminación;
+- Lucas-Kanade permite seguir puntos concretos de la escena;
+- Lucas-Kanade suele ofrecer un seguimiento más estable si hay suficientes puntos con textura;
+- Lucas-Kanade puede perder puntos en movimientos rápidos o escenas con poca textura.
 
 ---
 
-## 15. Limitaciones observadas
+## 16. Limitaciones observadas
 
-Durante las pruebas se han observado varias limitaciones:
+Durante el desarrollo se han identificado varias limitaciones:
 
 - La diferencia de imágenes no detecta objetos como tal, sino zonas cambiantes.
 - Los cambios de iluminación pueden interpretarse como movimiento.
 - Las sombras pueden generar falsas detecciones.
-- Lucas-Kanade puede perder puntos si el movimiento es muy rápido.
-- El ruido puede generar puntos característicos falsos.
-- El desplazamiento máximo puede estar afectado por outliers.
+- El ruido puede provocar regiones de movimiento no deseadas.
+- Lucas-Kanade depende de la calidad de los puntos característicos.
+- Lucas-Kanade puede perder puntos si el movimiento es rápido.
+- El desplazamiento máximo puede estar muy influido por outliers.
+- Las escenas reales son más difíciles de analizar que las sintéticas porque incluyen textura, iluminación y movimiento menos controlados.
 
-Por este motivo, se utilizan métricas robustas como la mediana y el percentil 95.
-
----
-
-## 16. Conclusiones preliminares
-
-La diferencia de imágenes es un método sencillo, rápido y útil para detectar movimiento en escenas controladas. Sin embargo, es sensible a cambios de iluminación, sombras, ruido y movimientos secundarios.
-
-Lucas-Kanade ofrece un seguimiento más estable de puntos característicos, especialmente en escenarios normales o con ruido moderado. Aun así, también presenta limitaciones ante cambios bruscos de iluminación, pérdida de puntos o movimientos rápidos.
-
-La comparación muestra que no existe un método perfecto para todos los casos. La elección depende del tipo de escena, la calidad del vídeo y las condiciones de movimiento.
+Estas limitaciones no invalidan el sistema, sino que ayudan a entender en qué condiciones funciona mejor cada método.
 
 ---
 
-## 17. Autoras
+## 17. Conclusiones
+
+La diferencia de imágenes permite detectar movimiento de forma sencilla y rápida. Es un método útil como primera aproximación, especialmente en escenas con cámara fija y condiciones controladas. Sin embargo, su principal limitación es que cualquier cambio visual puede aparecer como movimiento, aunque no corresponda realmente al objeto que se quiere seguir.
+
+Lucas-Kanade ofrece un seguimiento más localizado mediante puntos característicos. Esto permite analizar el desplazamiento de forma más fina, aunque su rendimiento depende de que la escena tenga textura suficiente y de que los puntos no se pierdan entre frames.
+
+La comparación muestra que no existe un método perfecto para todos los casos. La elección depende del tipo de escena, la iluminación, el ruido, la velocidad del movimiento y la textura disponible.
+
+Una mejora natural del sistema sería combinar ambos enfoques: utilizar diferencia de imágenes para localizar regiones móviles y Lucas-Kanade para seguir puntos dentro de esas regiones.
+
+---
+
+## 18. Trabajo futuro
+
+Como posibles mejoras futuras se plantean:
+
+- combinar diferencia de imágenes y Lucas-Kanade en un único pipeline;
+- aplicar seguimiento solo dentro de la región móvil detectada;
+- añadir estabilización frente a cambios de iluminación;
+- filtrar outliers en los desplazamientos;
+- comparar con métodos más avanzados de tracking;
+- añadir detección semántica mediante modelos de visión por computador;
+- probar el sistema en vídeos más largos y variados.
+
+---
+
+## 19. Autoras
 
 Proyecto realizado para la asignatura **Percepción en Automática y Robótica**.
 
