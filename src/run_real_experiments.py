@@ -12,6 +12,60 @@ OUTPUT_PLOTS_DIR = PROJECT_DIR / "outputs" / "plots" / "real"
 
 OUTPUT_VIDEO_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_PLOTS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+# Set this to None if you want to process the original resolution.
+# A fixed long side makes vertical/horizontal and 4K videos more manageable.
+TARGET_LONG_SIDE = 1280
+
+
+def resize_frame(frame: np.ndarray, target_long_side: int | None = TARGET_LONG_SIDE) -> np.ndarray:
+    """
+    Resize a frame keeping the aspect ratio.
+
+    This is useful because some real videos may be 4K or vertical.
+    Using a common long side makes processing faster and outputs easier to compare.
+    """
+
+    if target_long_side is None:
+        return frame
+
+    height, width = frame.shape[:2]
+    current_long_side = max(width, height)
+
+    if current_long_side == target_long_side:
+        return frame
+
+    scale = target_long_side / current_long_side
+    new_width = int(round(width * scale))
+    new_height = int(round(height * scale))
+
+    # Video encoders usually work better with even dimensions.
+    if new_width % 2 != 0:
+        new_width -= 1
+
+    if new_height % 2 != 0:
+        new_height -= 1
+
+    new_width = max(new_width, 2)
+    new_height = max(new_height, 2)
+
+    return cv2.resize(frame, (new_width, new_height), interpolation=cv2.INTER_AREA)
+
+
+def get_valid_fps(cap: cv2.VideoCapture, default_fps: float = 25.0) -> float:
+    """
+    Get FPS from a video. If the value is invalid, return a default value.
+    """
+
+    fps = cap.get(cv2.CAP_PROP_FPS)
+
+    if fps is None or fps <= 0 or np.isnan(fps):
+        return default_fps
+
+    return fps
+
+
 def clear_previous_outputs() -> None:
     """
     Delete previous real video outputs before running the experiments again.
@@ -27,18 +81,22 @@ def clear_previous_outputs() -> None:
     for file in OUTPUT_PLOTS_DIR.glob("*.png"):
         file.unlink()
 
+
+# Use [1, 2, 3, 4] to process all real videos.
+# Use [3, 4] if you only want to process the new videos.
+VIDEO_IDS = [1, 2, 3, 4]
+
+CONDITIONS = [
+    "normal",
+    "noisy",
+    "light_change",
+    "fast",
+]
+
 SCENARIOS = {
-    "real_normal_1": INPUT_DIR / "real_normal_1.mp4",
-    "real_normal_2": INPUT_DIR / "real_normal_2.mp4",
-
-    "real_noisy_1": INPUT_DIR / "real_noisy_1.mp4",
-    "real_noisy_2": INPUT_DIR / "real_noisy_2.mp4",
-
-    "real_light_change_1": INPUT_DIR / "real_light_change_1.mp4",
-    "real_light_change_2": INPUT_DIR / "real_light_change_2.mp4",
-
-    "real_fast_1": INPUT_DIR / "real_fast_1.mp4",
-    "real_fast_2": INPUT_DIR / "real_fast_2.mp4",
+    f"real_{condition}_{video_id}": INPUT_DIR / f"real_{condition}_{video_id}.mp4"
+    for condition in CONDITIONS
+    for video_id in VIDEO_IDS
 }
 
 
@@ -46,17 +104,23 @@ def track_with_frame_difference(
     input_video_path: Path,
     output_video_path: Path,
     threshold_value: int = 25,
-    min_area: int = 300,
-    kernel_size: int = 5,
+    min_area: int = 800,
+    kernel_size: int = 7,
 ) -> pd.DataFrame:
     cap = cv2.VideoCapture(str(input_video_path))
 
     if not cap.isOpened():
         raise RuntimeError(f"Could not open video: {input_video_path}")
 
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = get_valid_fps(cap)
+
+    ret, previous_frame = cap.read()
+
+    if not ret:
+        raise RuntimeError(f"Could not read first frame: {input_video_path}")
+
+    previous_frame = resize_frame(previous_frame)
+    height, width = previous_frame.shape[:2]
 
     writer = cv2.VideoWriter(
         str(output_video_path),
@@ -64,11 +128,6 @@ def track_with_frame_difference(
         fps,
         (width, height),
     )
-
-    ret, previous_frame = cap.read()
-
-    if not ret:
-        raise RuntimeError(f"Could not read first frame: {input_video_path}")
 
     previous_gray = cv2.cvtColor(previous_frame, cv2.COLOR_BGR2GRAY)
     previous_gray = cv2.GaussianBlur(previous_gray, (5, 5), 0)
@@ -82,6 +141,8 @@ def track_with_frame_difference(
 
         if not ret:
             break
+
+        frame = resize_frame(frame)
 
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
@@ -124,13 +185,21 @@ def track_with_frame_difference(
                     "area": area,
                 })
 
-                cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.circle(frame, (cx, cy), 5, (0, 0, 255), -1)
+                cv2.rectangle(
+                    frame,
+                    (x, y),
+                    (x + w, y + h),
+                    (0, 255, 0),
+                    2,
+                )
 
-        trajectory_points = [(point["x"], point["y"]) for point in trajectory]
-
-
-            
+                cv2.circle(
+                    frame,
+                    (cx, cy),
+                    5,
+                    (0, 0, 255),
+                    -1,
+                )
 
         status_text = "Detected" if detected else "Not detected"
 
@@ -183,9 +252,15 @@ def track_with_lucas_kanade(
     if not cap.isOpened():
         raise RuntimeError(f"Could not open video: {input_video_path}")
 
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
-    height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = get_valid_fps(cap)
+
+    ret, old_frame = cap.read()
+
+    if not ret:
+        raise RuntimeError(f"Could not read first frame: {input_video_path}")
+
+    old_frame = resize_frame(old_frame)
+    height, width = old_frame.shape[:2]
 
     writer = cv2.VideoWriter(
         str(output_video_path),
@@ -193,11 +268,6 @@ def track_with_lucas_kanade(
         fps,
         (width, height),
     )
-
-    ret, old_frame = cap.read()
-
-    if not ret:
-        raise RuntimeError(f"Could not read first frame: {input_video_path}")
 
     old_gray = cv2.cvtColor(old_frame, cv2.COLOR_BGR2GRAY)
 
@@ -229,10 +299,11 @@ def track_with_lucas_kanade(
         if not ret:
             break
 
+        frame = resize_frame(frame)
+
         frame_gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         output_frame = frame.copy()
 
-        # If there are no points, try to detect new ones and continue.
         if p0 is None or len(p0) < 5:
             p0 = cv2.goodFeaturesToTrack(frame_gray, mask=None, **feature_params)
 
@@ -270,7 +341,6 @@ def track_with_lucas_kanade(
             **lk_params,
         )
 
-        # If optical flow fails, re-detect points but do not stop the video.
         if p1 is None or status is None:
             p0 = cv2.goodFeaturesToTrack(frame_gray, mask=None, **feature_params)
 
@@ -395,6 +465,7 @@ def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
             "p95_displacement": 0,
             "max_displacement": 0,
             "mean_area": 0,
+            "mean_points_per_frame": np.nan,
         }
 
     displacement = df["displacement"].dropna()
@@ -409,6 +480,7 @@ def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
             "p95_displacement": 0,
             "max_displacement": 0,
             "mean_area": df["area"].mean() if "area" in df.columns else 0,
+            "mean_points_per_frame": np.nan,
         }
 
     return {
@@ -420,7 +492,9 @@ def summarize_frame_difference(df: pd.DataFrame, scenario_name: str) -> dict:
         "p95_displacement": displacement.quantile(0.95),
         "max_displacement": displacement.max(),
         "mean_area": df["area"].mean() if "area" in df.columns else 0,
+        "mean_points_per_frame": np.nan,
     }
+
 
 def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
     if df.empty or "displacement" not in df.columns:
@@ -432,6 +506,7 @@ def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
             "median_displacement": 0,
             "p95_displacement": 0,
             "max_displacement": 0,
+            "mean_area": np.nan,
             "mean_points_per_frame": 0,
         }
 
@@ -446,6 +521,7 @@ def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
             "median_displacement": 0,
             "p95_displacement": 0,
             "max_displacement": 0,
+            "mean_area": np.nan,
             "mean_points_per_frame": 0,
         }
 
@@ -459,12 +535,18 @@ def summarize_lucas_kanade(df: pd.DataFrame, scenario_name: str) -> dict:
         "median_displacement": displacement.median(),
         "p95_displacement": displacement.quantile(0.95),
         "max_displacement": displacement.max(),
+        "mean_area": np.nan,
         "mean_points_per_frame": points_per_frame.mean(),
     }
 
 
 def main():
+    clear_previous_outputs()
     all_summaries = []
+
+    print("Real scenarios to process:")
+    for scenario_name in SCENARIOS:
+        print(f"- {scenario_name}")
 
     for scenario_name, video_path in SCENARIOS.items():
         print(f"\nProcessing scenario: {scenario_name}")
@@ -493,7 +575,7 @@ def main():
             output_video_path=lk_video,
         )
 
-        frame_columns = ["frame", "x", "y", "area", "displacement"]
+        frame_columns = ["frame", "x", "y", "area", "dx", "dy", "displacement"]
         lk_columns = ["frame", "x_old", "y_old", "x_new", "y_new", "dx", "dy", "displacement"]
 
         if frame_df.empty:
@@ -501,7 +583,6 @@ def main():
 
         if lk_df.empty:
             lk_df = pd.DataFrame(columns=lk_columns)
-
 
         frame_df.to_csv(frame_diff_csv, index=False)
         lk_df.to_csv(lk_csv, index=False)
@@ -511,8 +592,28 @@ def main():
 
         print(f"Saved frame difference video: {frame_diff_video}")
         print(f"Saved Lucas-Kanade video: {lk_video}")
+        print(f"Saved frame difference CSV: {frame_diff_csv}")
+        print(f"Saved Lucas-Kanade CSV: {lk_csv}")
 
     summary_df = pd.DataFrame(all_summaries)
+
+    summary_columns = [
+        "scenario",
+        "method",
+        "detections",
+        "mean_displacement",
+        "median_displacement",
+        "p95_displacement",
+        "max_displacement",
+        "mean_area",
+        "mean_points_per_frame",
+    ]
+
+    if summary_df.empty:
+        summary_df = pd.DataFrame(columns=summary_columns)
+    else:
+        summary_df = summary_df[summary_columns]
+
     summary_path = OUTPUT_PLOTS_DIR / "real_experiments_summary.csv"
     summary_df.to_csv(summary_path, index=False)
 
